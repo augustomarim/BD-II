@@ -1,0 +1,75 @@
+create proc Backup_Sistema as
+
+declare @Dia Varchar(20);
+declare @BasePrincipal Varchar(200);
+declare @caminho Varchar(200);
+declare @DatabaseName Varchar(255);
+
+set datefirst 7;
+
+set @Dia = case datepart(dw, getdate())
+	when 1 then 'Domingo'
+	when 2 then 'Segunda'
+	when 3 then 'Terça'
+	when 4 then 'Quarta'
+	when 5 then 'Quinta'
+	when 6 then 'Sexta'
+	when 7 then 'Sabado'
+End;
+
+
+set @DatabaseName = DB_NAME();
+set @caminho ='C:\DevC\' + @DatabaseName + '_' + @Dia;
+
+
+backup database @DatabaseName to disk = @caminho
+
+exec Backup_Sistema
+
+-----------------------------------------------------------------------------------------------------------------|
+
+create proc maiorMenor @tabela varchar(1), @minMax int
+as
+
+if @tabela = 'P'
+begin
+	if @minMax = 0
+	select Min(idPagar) from pagar
+	else 
+	select Max(idPagar) from pagar
+end
+if @tabela = 'R'
+begin
+	if @minMax = 0
+	select Min(idReceber) from receber
+	else 
+	select Max(idReceber) from receber
+end
+
+return
+
+exec maiorMenor @tabela = 'R', @minMax = 1
+
+------------------------------------------------------------------------------------------------------------------|
+
+ALTER proc extrato (@nome varchar(50), @datainicial date, @datafinal date, @tipoFatura int) 
+as
+
+if @tipoFatura = 0
+begin
+	select emp_razaosocial, rec_descricao, rec_valor, rec_vencimento, rec_pagto from empresa, receber
+	where idempresa = fkempresa and rec_pagto is not null and rec_pagto >= @dataInicial and rec_pagto <= @dataFinal and emp_razaosocial like '%'+@nome+'%'
+end
+if @tipoFatura = 1
+begin
+	select emp_razaosocial, rec_descricao, rec_valor, rec_vencimento, rec_pagto from empresa, receber
+	where idempresa = fkempresa and rec_pagto is null and rec_vencimento >= @dataInicial and rec_vencimento <= @dataFinal and emp_razaosocial like '%'+@nome+'%'
+end
+if @tipoFatura = 2
+begin
+	select emp_razaosocial, rec_descricao, rec_valor, rec_vencimento, rec_pagto from empresa, receber
+	where idempresa = fkempresa and rec_vencimento > @dataInicial and rec_vencimento < @dataFinal and emp_razaosocial like '%'+@nome+'%'
+end
+
+
+exec extrato @nome = 'Tim', @datainicial = '2000-03-09' , @datafinal = '2025-09-03' , @tipoFatura = 1
