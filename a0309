@@ -73,3 +73,34 @@ end
 
 
 exec extrato @nome = 'Tim', @datainicial = '2000-03-09' , @datafinal = '2025-09-03' , @tipoFatura = 1
+
+------------------------------------------------------------------------------------------------------------------|
+
+alter proc extrato123(@tipodesejado int, @dataInicial datetime, @dataFinal datetime) as
+
+if @tipodesejado = 0
+begin
+	select emp_razaosocial as Empresa, 
+		sum(case when rec_pagto is not null then rec_valor else 0 end) as ValorRecebido, 
+		sum(case when rec_pagto is null then rec_valor else 0 end) as ValorReceber,
+		sum(rec_valor) as TotalFatorado
+	from empresa, receber where rec_pagto is not NULL and fkempresa = idempresa and rec_vencimento >= @datainicial and rec_vencimento <= @datafinal
+	group by emp_razaosocial order by emp_razaosocial end
+
+if @tipodesejado = 1
+begin 
+	select emp_razaosocial as Empresa, 
+		sum(case when rec_pagto is not null then rec_valor else 0 end) as ValorRecebido, 
+		sum(case when rec_pagto is null then rec_valor else 0 end) as ValorReceber, 
+		sum(rec_valor) as TotalFatorado
+	from empresa, receber where rec_pagto is NULL and fkempresa = idempresa and rec_vencimento >= @datainicial and rec_vencimento <= @datafinal
+	group by emp_razaosocial order by emp_razaosocial end
+
+if @tipodesejado = 2
+begin 
+	select emp_razaosocial as Empresa, 
+		sum(case when rec_pagto is not null then rec_valor else 0 end) as ValorRecebido, 
+		sum(case when rec_pagto is null then rec_valor else 0 end) as ValorReceber,
+		sum(rec_valor) as TotalFatorado
+	from empresa, receber where fkempresa = idempresa and rec_vencimento >= @datainicial and rec_vencimento <= @datafinal
+	group by emp_razaosocial order by emp_razaosocial end
